@@ -10,6 +10,7 @@ public class TableManager
     }
     public GlobalConfig GlobalConfig { get; private set; }
     public AudioConfig AudioConfig { get; private set; }
+    public WorldPropertyConfigSO WorldPropertyConfig { get; private set; }
 
     #region Sheet
     //public CharacterConfig_SO CharacterConfig{ get; private set; }
@@ -20,6 +21,7 @@ public class TableManager
         GlobalConfig=await Addressables.LoadAssetAsync<GlobalConfig>(typeof(GlobalConfig).ToString()).Task;
         AudioConfig = await Addressables.LoadAssetAsync<AudioConfig>(typeof(AudioConfig).ToString()).Task;
         AudioConfig.Init();
+        WorldPropertyConfig= await Addressables.LoadAssetAsync<WorldPropertyConfigSO>(typeof(WorldPropertyConfigSO).ToString()).Task;
 
 
         //CharacterConfig = await Addressables.LoadAssetAsync<CharacterConfig_SO>(typeof(CharacterConfig).ToString()).Task;

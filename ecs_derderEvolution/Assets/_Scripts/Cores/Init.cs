@@ -20,7 +20,10 @@ public class Init : MonoBehaviour
         {
             Destroy(go);
         }
-        //await SceneManager.UnloadSceneAsync(SceneManager.GetSceneAt(1));
+        for ( int i = 1; i < SceneManager.sceneCount; i++ )
+        {
+            await SceneManager.UnloadSceneAsync(SceneManager.GetSceneAt(i));
+        }
         await ContainerInit();
         _initGos.Add(gameObject);
         //if( !QuickStart ) 
@@ -48,13 +51,6 @@ public class Init : MonoBehaviour
         var audioManager = new AudioManager();
         audioManager.Init();
         GContext.RegisterSingleton<AudioManager>(audioManager);
-
-        GContext.RegisterSingleton<ActManager>();
-        GContext.RegisterSingleton<InputManager>();
-
-        GContext.RegisterMoudle<InputDataModule>();
-        GContext.RegisterMoudle<GameStatusDM>();
-        GContext.RegisterMoudle<GamePlayDM>();
 
         Debug.Log("GContext register time:" + Time.time);
 

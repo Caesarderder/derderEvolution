@@ -1,8 +1,11 @@
-using System.Collections.Generic;
 using System.Threading.Tasks;
+using Unity.Entities;
 using UnityEngine;
+using Unity.Scenes;
+using Unity.Entities.Serialization;
+using UnityEngine.SceneManagement;
+using System.Collections.Generic;
 using UnityEngine.AddressableAssets;
-using UnityEngine.ResourceManagement.AsyncOperations;
 
 public class ResManager
 {
@@ -11,8 +14,11 @@ public class ResManager
 
     public static MonoManager MonoManager;
 
+    OperationHandle<GameObject> _handlesGos=new();
+    OperationHandle<SubScene> _handlesSubScenes=new();
 
-    private Dictionary<string, AsyncOperationHandle<GameObject>> dic_loadingOps = new Dictionary<string, AsyncOperationHandle<GameObject>>();
+    Dictionary<string,AsyncOperation> _handles=new();
+
     #endregion
 
     #region Methods
@@ -21,76 +27,36 @@ public class ResManager
         MonoManager=await LoadGo<MonoManager>("MonoManager");
         GameObject.DontDestroyOnLoad(MonoManager.gameObject);
     }
+
     public async Task<T> LoadGo<T>(string address,Transform parent,Vector3 pos) where T : MonoBehaviour
     {
-        AsyncOperationHandle<GameObject> handle;
-        // 防止重复加载
-        if ( !dic_loadingOps.ContainsKey(address) )
+        var go=await _handlesGos.Load(address);
+
+        if ( go != null )
         {
-            // 使用Addressables异步加载GameObject
-            handle = Addressables.LoadAssetAsync<GameObject>(address);
-            dic_loadingOps.Add(address, handle);
-        }
-        else
-            handle = dic_loadingOps[address];
-
-        var go = await handle.Task;
-
-
-        if ( handle.Status == AsyncOperationStatus.Succeeded )
-        {
-            // 实例化GameObject
             GameObject loadedGameObject = GameObject.Instantiate(go,pos,go.transform.rotation,parent);
             var mono= loadedGameObject.GetComponent<T>();
-
             if ( mono != null )
             {
                 return mono;
             }
         }
-        else
-        {
-            Debug.LogError($"Failed to load  go {address} via Addressables.");
-            dic_loadingOps.Remove(address);
-        }
-
-        //Debug.LogError($"none go adds to load {address}.");
+        Debug.LogError($"Failed to load  go {address} via Addressables.");
         return default;
     }
     public async Task<T> LoadGo<T>(string address,Transform parent) where T : MonoBehaviour
     {
-        AsyncOperationHandle<GameObject> handle;
-        // 防止重复加载
-        if ( !dic_loadingOps.ContainsKey(address) )
+        var go=await _handlesGos.Load(address); 
+        if ( go != null )
         {
-            // 使用Addressables异步加载GameObject
-            handle = Addressables.LoadAssetAsync<GameObject>(address);
-            dic_loadingOps.Add(address, handle);
-        }
-        else
-            handle = dic_loadingOps[address];
-
-        var go = await handle.Task;
-
-
-        if ( handle.Status == AsyncOperationStatus.Succeeded )
-        {
-            // 实例化GameObject
             GameObject loadedGameObject = GameObject.Instantiate(go,parent);
             var mono= loadedGameObject.GetComponent<T>();
-
             if ( mono != null )
             {
                 return mono;
             }
         }
-        else
-        {
-            Debug.LogError($"Failed to load  go {address} via Addressables.");
-            dic_loadingOps.Remove(address);
-        }
-
-        //Debug.LogError($"none go adds to load {address}.");
+        Debug.LogError($"Failed to load  go {address} via Addressables.");
         return default;
     }
     /// <summary>
@@ -98,38 +64,17 @@ public class ResManager
     /// </summary>
     public async Task<T> LoadGo<T>(string address) where T : MonoBehaviour
     {
-        AsyncOperationHandle<GameObject> handle;
-        // 防止重复加载
-        if ( !dic_loadingOps.ContainsKey(address) )
+        var go=await _handlesGos.Load(address); 
+        if ( go != null )
         {
-            // 使用Addressables异步加载GameObject
-            handle = Addressables.LoadAssetAsync<GameObject>(address);
-            dic_loadingOps.Add(address, handle);
-        }
-        else
-            handle = dic_loadingOps[address];
-
-        var go = await handle.Task;
-
-
-        if ( handle.Status == AsyncOperationStatus.Succeeded )
-        {
-            // 实例化GameObject
             GameObject loadedGameObject = GameObject.Instantiate(go);
             var mono= loadedGameObject.GetComponent<T>();
-
             if ( mono != null )
             {
                 return mono;
             }
         }
-        else
-        {
-            Debug.LogError($"Failed to load  go {address} via Addressables.");
-            dic_loadingOps.Remove(address);
-        }
-
-        //Debug.LogError($"none go adds to load {address}.");
+        Debug.LogError($"Failed to load  go {address} via Addressables.");
         return default;
     }
 
@@ -142,19 +87,28 @@ public class ResManager
         {
             UnityEngine.GameObject.Destroy(go);
         }
-        ReleaseHandle(address);
+        _handlesGos.UnLoad(address);
     }
 
-    /// <summary>
-    /// 释放指定的GameObject资源
-    /// </summary>
-    public void ReleaseHandle(string address)
+    public async Task LoadScene(string address)
     {
-        if ( dic_loadingOps.ContainsKey(address) )
+        AsyncOperation handle;
+        if(_handles.ContainsKey(address))
         {
-            // 卸载Addressables资源
-            Addressables.Release(dic_loadingOps[address]);
-            dic_loadingOps.Remove(address);
+            handle= _handles[address];
+        }
+        else
+        {
+            handle = SceneManager.LoadSceneAsync(address, LoadSceneMode.Additive);
+        }    
+        await handle;
+    }
+    public void UnloadScene(string address)
+    {
+        if(_handles.ContainsKey(address))
+        {
+            Addressables.Release(_handles[address]);
+            SceneManager.UnloadSceneAsync(address);
         }
     }
 

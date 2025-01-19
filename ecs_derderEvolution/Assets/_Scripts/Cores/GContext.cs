@@ -44,12 +44,12 @@ public static class GContext
             return dic_singletonRegistry[type] as T;
         }
 
-        //        // 创建新的单例并存储
-        //        T instance = new T();
-        //        dic_singletonRegistry[type] = instance;
+        // 创建新的单例并存储
+        T instance = new T();
+        dic_singletonRegistry[type] = instance;
 
-        UnityEngine.Debug.LogError($"haven't registered signleton： {typeof(T).ToString()}");
-        return null;
+        //UnityEngine.Debug.LogError($"haven't registered signleton： {typeof(T).ToString()}");
+        return instance;
     }
 
     public static void RegisterMoudle<T>() where T : Module, new()

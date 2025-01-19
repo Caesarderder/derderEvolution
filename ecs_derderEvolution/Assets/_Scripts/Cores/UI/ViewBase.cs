@@ -1,5 +1,6 @@
 using System;
 using UniRx;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class ViewBase: MonoBehaviour
@@ -29,7 +30,6 @@ public class ViewBase: MonoBehaviour
 		EventAggregator.Publish(new SUIDestory{ Type = Name});
         Debug.Log($"<color=yellow>UI:   {Name.ToString()}   Destoried</color>");
         Destroy(gameObject);
-
 	}
 
 	#endregion
